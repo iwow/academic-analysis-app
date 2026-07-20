@@ -1,0 +1,55 @@
+{
+  "name": "academic-analysis",
+  "version": "1.0.0",
+  "description": "九科学情分析系统 - 学生成绩追踪与可视化工具",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack:win": "electron-builder --win --x64",
+    "pack:mac": "electron-builder --mac --x64",
+    "pack:all": "electron-builder --win --mac --x64",
+    "pack:win-portable": "electron-builder --win portable --x64",
+    "pack:mac-dmg": "electron-builder --mac dmg --x64"
+  },
+  "build": {
+    "appId": "com.academic.analysis",
+    "productName": "学情分析系统",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "main.js",
+      "preload.js"
+    ],
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "学情分析系统_${version}_win64.${ext}"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] }
+      ],
+      "icon": "build/icon.icns",
+      "artifactName": "学情分析系统_${version}_mac.${ext}",
+      "category": "public.app-category.education"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "unicode": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.0"
+  },
+  "author": "",
+  "license": "MIT"
+}

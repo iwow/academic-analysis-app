@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+build/icon.ico
+build/icon.icns
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+
+# Electron
+out/
+*.exe
+*.dmg
+*.AppImage
