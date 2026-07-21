@@ -1,6 +1,17 @@
-# 九科学情分析系统
+# Academic Analysis — 学情分析系统
 
-一站式学生成绩追踪、可视化分析与学习建议生成工具。支持 **Windows / macOS / Android** 三端。
+一站式学生成绩追踪、可视化分析与学习建议生成工具。
+支持 **Windows / macOS / Linux / Android**，**5 种语言**。
+
+## 🌏 多语言版本
+
+| 语言 | 文件 | 启动命令 |
+|------|------|---------|
+| 🇨🇳 简体中文 | `src/index.html` | `npm run start:zh` |
+| 🇺🇸 English | `src/index.en.html` | `npm run start:en` |
+| 🇹🇼 繁體中文 | `src/index.zh-tw.html` | `npm run start:zh-tw` |
+| 🇯🇵 日本語 | `src/index.ja.html` | `npm run start:ja` |
+| 🇰🇷 한국어 | `src/index.ko.html` | `npm run start:ko` |
 
 ## 功能
 
@@ -16,77 +27,48 @@
 
 ### 浏览器直接使用（无需安装）
 
-打开 `src/index.html` 即可 — Win / Mac / Linux 通用。
+打开对应语言的 `src/index.*.html` 即可 — Win / Mac / Linux 通用。
 
-### Windows 桌面版 (exe)
-
-```bash
-npm install
-npm run pack:win
-```
-
-输出文件在 `dist/` 目录：
-- **安装包**: `学情分析系统_1.0.0_win64.exe`
-- **便携版**: `学情分析系统_1.0.0_win64_portable.exe`（免安装，直接运行）
-
-### macOS 桌面版 (dmg)
+### Electron 桌面版
 
 ```bash
 npm install
-npm run pack:mac
+npm run start        # 默认中文
+npm run start:en     # English
+npm run start:ja     # 日本語
+npm run pack:win     # 打包 Windows 安装包
+npm run pack:mac     # 打包 macOS 安装包
 ```
-
-输出文件在 `dist/` 目录：
-- **安装包**: `学情分析系统_1.0.0_mac.dmg`
-
-### Android APP (apk)
-
-用 Android Studio 打开 `android/` 目录，Build → Build APK(s)。
-
-或命令行：
-
-```bash
-cd android
-./gradlew assembleRelease
-```
-
-输出文件：`android/app/build/outputs/apk/release/app-release.apk`
 
 ## 项目结构
 
 ```
 academic-analysis-app/
-├── src/                  # 前端网页源码
-│   └── index.html        # 主要应用（含全部 JS/CSS）
-├── main.js               # Electron 主进程
-├── preload.js            # Electron 预加载脚本
-├── package.json          # 依赖与构建配置
-├── android/              # Android 源码
-│   └── app/src/main/
-│       ├── java/         # Java 主代码
-│       ├── res/          # 资源文件
-│       └── AndroidManifest.xml
+├── src/
+│   ├── index.html          # 简体中文
+│   ├── index.en.html       # English
+│   ├── index.zh-tw.html    # 繁體中文
+│   ├── index.ja.html       # 日本語
+│   └── index.ko.html       # 한국어
+├── main.js                 # Electron 主进程（5 语言切换菜单）
+├── preload.js              # Electron 安全隔离
+├── android/                # Android WebView 壳
+├── build-macos.sh          # macOS 一键构建脚本
+├── build-android.sh        # Android 构建脚本
+├── package.json            # 依赖与构建配置 (electron-builder)
+├── main.js                 # Electron 主进程 (5 语言菜单)
+├── preload.js              # 预加载脚本
 └── README.md
-```
-
-## 技术栈
-
-- **前端**: 原生 HTML + Chart.js 图表
-- **桌面壳**: Electron 28
-- **安卓壳**: Android WebView + AppCompat
-- **构建**: electron-builder
 
 ## 下载安装包
 
-从 GitHub Releases 下载预构建的安装包：
-- **Windows 便携版**: https://github.com/iwow/academic-analysis-app/releases
+从 GitHub Releases 下载预构建版本：
+- **Windows**: https://github.com/iwow/academic-analysis-app/releases
 
 ## 构建环境要求
 
-| 目标平台 | 所需环境 | 构建命令 |
-|---------|---------|---------|
-| Windows (exe) | Node.js 18+, Windows | `npm run pack:win` |
-| macOS (dmg) | Node.js 18+, macOS + Xcode | `npm run pack:mac` 或 `bash build-macos.sh` |
-| Android (apk) | Java 11+, Android SDK | `bash build-android.sh` |
-
-> macOS 和 Android 版需要在对应平台上构建（无法跨平台交叉编译）。
+| 目标 | 环境 | 命令 |
+|------|------|------|
+| Windows exe | Node.js 18+, Windows | `npm run pack:win` |
+| macOS dmg | Node.js 18+, macOS + Xcode | `npm run pack:mac` |
+| Android apk | Java 11+, Android SDK | `bash build-android.sh` |
