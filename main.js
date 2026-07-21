@@ -34,7 +34,7 @@ const L10N = {
     resetZoomLabel: '重置缩放',
     aboutLabel: '关于学情分析系统',
     aboutTitle: '关于学情分析系统',
-    aboutMsg: '九科学情分析系统 v1.1.0',
+    aboutMsg: '九科学情分析系统 v1.2.0',
     aboutDetail: 'Win/Mac 通用桌面应用\n数据存储在浏览器本地，不会上传到任何服务器。\n\n基于 Electron 构建。\n中英文双版支持。',
     htmlFile: 'index.html'
   },
@@ -62,7 +62,7 @@ const L10N = {
     resetZoomLabel: 'Reset Zoom',
     aboutLabel: 'About Academic Analysis',
     aboutTitle: 'About Academic Analysis',
-    aboutMsg: 'Academic Analysis System v1.1.0',
+    aboutMsg: 'Academic Analysis System v1.2.0',
     aboutDetail: 'Cross-platform desktop app (Win/Mac)\nAll data stored in browser localStorage — never uploaded.\n\nBuilt with Electron.\nBilingual: English & Chinese.',
     htmlFile: 'index.en.html'
   }
