@@ -50,14 +50,12 @@ academic-analysis-app/
 │   ├── index.zh-tw.html    # 繁體中文
 │   ├── index.ja.html       # 日本語
 │   └── index.ko.html       # 한국어
-├── main.js                 # Electron 主进程（5 语言切换菜单）
-├── preload.js              # Electron 安全隔离
-├── android/                # Android WebView 壳
-├── build-macos.sh          # macOS 一键构建脚本
-├── build-android.sh        # Android 构建脚本
-├── package.json            # 依赖与构建配置 (electron-builder)
 ├── main.js                 # Electron 主进程 (5 语言菜单)
 ├── preload.js              # 预加载脚本
+├── package.json            # 依赖与构建配置
+├── android/                # Android WebView 源码
+├── build-macos.sh          # macOS 构建脚本
+├── build-android.sh        # Android 构建脚本
 └── README.md
 
 ## 下载安装包
