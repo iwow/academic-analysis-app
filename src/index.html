@@ -294,7 +294,7 @@ function updateSubjects(){
 function getActiveSubjects(){ return activeSubjects.map(id => ALL_SUBJECTS.find(s=>s.id===id)).filter(Boolean); }
 
 // ===== DATA MANAGEMENT =====
-function getExams(){ return state.exams.sort((a,b)=>new Date(a.date)-new Date(b.date)); }
+function getExams(){ return [...state.exams].sort((a,b)=>new Date(a.date)-new Date(b.date)); }
 
 function getScore(examId, subject){
   const s = state.scores.find(s=>s.examId===examId&&s.subject===subject);
@@ -321,7 +321,7 @@ function addExam(name, date){
 
 function getTotal(examId){
   let t = 0;
-  activeSubjects.forEach(s => { const v=getScore(examId,s); if(v) t+=v; });
+  activeSubjects.forEach(s => { const v=getScore(examId,s); if(v !== null) t+=v; });
   return t;
 }
 
@@ -507,10 +507,11 @@ function renderDataTable(){
   let html = '<tr><th onclick="sortDataTable(0)" data-col="0">考试 <span class="sort">↓↑</span></th><th onclick="sortDataTable(1)" data-col="1">日期 <span class="sort">↓↑</span></th>';
   const subs = getActiveSubjects();
   subs.forEach(s => { html += '<th onclick="sortDataTable(\''+s.id+'\')" data-col="'+s.id+'" style="color:'+SUBJ_COLORS[s.id]+'">'+s.label+' <span class="sort">↓↑</span></th>'; });
-  html += '<th onclick="sortDataTable(-1)" data-col="total" style="color:#1a237e">总分 <span class="sort">↓↑</span></th></tr>';
+  html += '<th onclick="sortDataTable(-1)" data-col="total" style="color:#1a237e">总分 <span class="sort">↓↑</span></th>';
+  html += '<th style="width:24px;color:#c62828">×</th></tr>';
   document.getElementById('dataThead').innerHTML = html;
 
-  // Build body
+  // Build body — renderDataTable version
   let bodyHtml = '';
   filtered.forEach(e => {
     bodyHtml += '<tr><td class="sbj">'+e.name+'</td><td style="color:#888;font-size:10px">'+e.date+'</td>';
@@ -521,7 +522,8 @@ function renderDataTable(){
     });
     const tot = getTotal(e.id);
     const totCls = tot/getFullTotal()>=0.8?'score-high':tot/getFullTotal()>=0.6?'score-mid':'score-low';
-    bodyHtml += '<td><strong class="'+totCls+'">'+tot+'</strong></td></tr>';
+    bodyHtml += '<td><strong class="'+totCls+'">'+tot+'</strong></td>';
+    bodyHtml += '<td><button class="btn" style="padding:2px 6px;font-size:10px;color:#c62828" onclick="if(confirm(\'删除 '+e.name+' ？\'))deleteExam('+e.id+')">×</button></td></tr>';
   });
   document.getElementById('dataTbody').innerHTML = bodyHtml;
   document.getElementById('dataCount').textContent = filtered.length + ' 次考试 · ' + subs.length + ' 科';
@@ -556,6 +558,12 @@ function saveEdit(input, examId, subject, orig){
 let dataSortCol = null;
 let dataSortDir = 1;
 function sortDataTable(col){
+  // Save any in-progress edit first
+  if(editCell){
+    const inp = editCell.querySelector('input');
+    if(inp) { inp.blur(); return; } // blur triggers saveEdit, re-sort after
+    editCell = null;
+  }
   if(dataSortCol===col){ dataSortDir*=-1; } else { dataSortCol=col; dataSortDir=1; }
   document.querySelectorAll('#dataThead th').forEach(th => th.classList.remove('sorted'));
   const ths = document.querySelectorAll('#dataThead th');
@@ -585,9 +593,19 @@ function sortDataTable(col){
     });
     const tot = getTotal(e.id);
     const totCls = tot/getFullTotal()>=0.8?'score-high':tot/getFullTotal()>=0.6?'score-mid':'score-low';
-    bodyHtml += '<td><strong class="'+totCls+'">'+tot+'</strong></td></tr>';
+    bodyHtml += '<td><strong class="'+totCls+'">'+tot+'</strong></td>';
+    bodyHtml += '<td><button class="btn" style="padding:2px 6px;font-size:10px;color:#c62828" onclick="if(confirm(\'删除 '+e.name+' ？\'))deleteExam('+e.id+')">×</button></td></tr>';
   });
   document.getElementById('dataTbody').innerHTML = bodyHtml;
+}
+
+// ===== DELETE EXAM =====
+function deleteExam(examId){
+  state.exams = state.exams.filter(e => e.id !== examId);
+  state.scores = state.scores.filter(s => s.examId !== examId);
+  saveToLocal();
+  renderAll();
+  document.getElementById('importMsg').textContent = '已删除考试';
 }
 
 // ===== QUICK ADD =====
@@ -692,11 +710,12 @@ function renderStackedChart(){
       labels: exams.map(e => e.name.replace(/^.{4}/,'')),
       datasets: subs.map(s => ({
         label: s.label,
-        data: exams.map(e => getScore(e.id,s.id)||0),
+        data: exams.map(e => getScore(e.id,s.id) !== null ? getScore(e.id,s.id) : null),
         backgroundColor: SUBJ_COLORS[s.id]+'55',
         borderColor: SUBJ_COLORS[s.id],
         borderWidth: 0.5,
-        borderRadius: 2
+        borderRadius: 2,
+        spanGaps: false
       }))
     },
     options: {
