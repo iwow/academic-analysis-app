@@ -5,7 +5,11 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
+    "start:zh": "electron . --lang=zh",
+    "start:en": "electron . --lang=en",
     "pack:win": "electron-builder --win --x64",
+    "pack:win:zh": "electron-builder --win --x64 --config.extraMetadata.lang=zh",
+    "pack:win:en": "electron-builder --win --x64 --config.extraMetadata.lang=en",
     "pack:mac": "electron-builder --mac --x64",
     "pack:all": "electron-builder --win --mac --x64",
     "pack:win-portable": "electron-builder --win portable --x64",
