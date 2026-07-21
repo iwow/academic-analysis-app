@@ -76,8 +76,17 @@ academic-analysis-app/
 - **安卓壳**: Android WebView + AppCompat
 - **构建**: electron-builder
 
+## 下载安装包
+
+从 GitHub Releases 下载预构建的安装包：
+- **Windows 便携版**: https://github.com/iwow/academic-analysis-app/releases
+
 ## 构建环境要求
 
-- Node.js 18+（桌面端构建）
-- Electron 依赖: Windows 需 Visual Studio Build Tools, macOS 需 Xcode
-- Android Studio / Gradle（安卓端构建）
+| 目标平台 | 所需环境 | 构建命令 |
+|---------|---------|---------|
+| Windows (exe) | Node.js 18+, Windows | `npm run pack:win` |
+| macOS (dmg) | Node.js 18+, macOS + Xcode | `npm run pack:mac` 或 `bash build-macos.sh` |
+| Android (apk) | Java 11+, Android SDK | `bash build-android.sh` |
+
+> macOS 和 Android 版需要在对应平台上构建（无法跨平台交叉编译）。
