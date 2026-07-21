@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>学業成績分析 - 成績追跡システム</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", "Segoe UI", Roboto, sans-serif; color:#1a1a1a; background:#f5f6fa; padding:20px; line-height:1.6}
+.container{max-width:1200px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin-bottom:4px;color:#1a237e}
+.subtitle{font-size:14px;color:#888;margin-bottom:16px}
+.card{background:#fff;border-radius:12px;border:0.5px solid #e0e0e5;padding:20px 24px;margin-bottom:16px}
+.card h2{font-size:16px;font-weight:600;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #eee;color:#1a237e}
+.card h3{font-size:14px;font-weight:600;margin:10px 0 6px;color:#333}
+.flex{display:flex;gap:12px;flex-wrap:wrap}
+.stat{flex:1;min-width:120px;background:#f5f6fa;border-radius:8px;padding:12px;text-align:center}
+.stat .num{font-size:28px;font-weight:600;color:#1a237e}
+.stat .num.up{color:#2e7d32}
+.stat .num.down{color:#c62828}
+.stat .lbl{font-size:11px;color:#888;margin-top:2px}
+.chart-wrap{position:relative;height:280px;margin:6px 0}
+.chart-wrap-sm{position:relative;height:200px;margin:6px 0}
+table{width:100%;border-collapse:collapse;font-size:12px;margin:6px 0}
+th{background:#f5f6fa;padding:7px 6px;text-align:center;font-weight:600;font-size:11px;color:#555;border-bottom:1px solid #ddd;cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{background:#e8eaf6}
+th .sort{opacity:0.3;margin-left:2px}
+td{padding:6px;text-align:center;border-bottom:0.5px solid #eee;font-size:12px}
+tr:hover td{background:#fafafa}
+td.sbj{text-align:left;font-weight:500;color:#333}
+td.editable{cursor:pointer;position:relative;min-width:32px}
+td.editable:hover{background:#e3f2fd}
+td.editable input{width:100%;border:1px solid #4361ee;border-radius:4px;padding:2px 4px;font-size:12px;text-align:center;outline:none;background:#fff}
+.score-high{color:#2e7d32;font-weight:600}
+.score-mid{color:#e65100;font-weight:500}
+.score-low{color:#c62828;font-weight:500}
+.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;margin:1px}
+.badge-a{background:#e8f5e9;color:#2e7d32}
+.badge-b{background:#e3f2fd;color:#1565c0}
+.badge-c{background:#fff3e0;color:#e65100}
+.badge-d{background:#ffebee;color:#c62828}
+.filter-bar{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{padding:5px 8px;border:0.5px solid #d0d0d5;border-radius:6px;font-size:12px;background:#fff;outline:none}
+.filter-bar input{flex:1;min-width:160px}
+.btn{padding:6px 14px;border:0.5px solid #d0d0d5;border-radius:6px;font-size:12px;background:#fff;cursor:pointer;transition:all .15s}
+.btn:hover{background:#f5f6fa;border-color:#4361ee}
+.btn-primary{background:#1a237e;color:#fff;border-color:#1a237e}
+.btn-primary:hover{background:#283593}
+.btn-success{background:#2e7d32;color:#fff;border-color:#2e7d32}
+.btn-success:hover{background:#388e3c}
+.btn-warning{background:#e65100;color:#fff;border-color:#e65100}
+.btn-warning:hover{background:#ef6c00}
+.tabs{display:flex;gap:0;margin-bottom:12px;border-bottom:1px solid #ddd;flex-wrap:wrap}
+.tab-btn{padding:8px 14px;font-size:12px;border:none;background:none;cursor:pointer;color:#888;border-bottom:2px solid transparent;font-weight:500;transition:all .15s}
+.tab-btn.active{color:#1a237e;border-bottom-color:#1a237e}
+.tab-btn:hover{color:#333}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.form-row{display:flex;gap:8px;margin:6px 0;flex-wrap:wrap;align-items:center}
+.form-row label{font-size:12px;font-weight:500;min-width:60px}
+.form-row input,.form-row select{padding:5px 8px;border:0.5px solid #d0d0d5;border-radius:6px;font-size:12px;outline:none}
+textarea{width:100%;padding:8px;border:0.5px solid #d0d0d5;border-radius:8px;font-size:12px;font-family:monospace;outline:none;resize:vertical}
+.sub-row{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0}
+.sub-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:11px;background:#f5f6fa;border:0.5px solid #e0e0e5}
+.sub-tag .sc{font-weight:600;font-size:12px}
+.progress{height:6px;background:#eee;border-radius:3px;overflow:hidden;margin:2px 0}
+.progress .bar{height:100%;border-radius:3px;transition:width .3s}
+.weak-item{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:0.5px solid #f0f0f0}
+.weak-item .pct{font-weight:600}
+.pct-red{color:#c62828}
+.pct-orange{color:#e65100}
+.pct-green{color:#2e7d32}
+@media(max-width:600px){
+  .stat{min-width:80px}
+  .filter-bar{flex-direction:column}
+  td,th{font-size:10px;padding:4px}
+}
+#print-area{display:none}
+@media print{
+  body{background:#fff;padding:0}
+  .no-print{display:none!important}
+  #print-area{display:block}
+  .card{break-inside:avoid;border:0.5px solid #ddd}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>学業成績分析システム</h1>
+<p class="subtitle">Win / Mac / Linux 対応 · ブラウザで開くだけ · セルをダブルクリック編集 · 自動グラフ</p>
+
+<div class="tabs" id="tabBar">
+  <button class="tab-btn active" data-tab="dashboard">ダッシュボード</button>
+  <button class="tab-btn" data-tab="data">成績表</button>
+  <button class="tab-btn" data-tab="chart">グラフ分析</button>
+  <button class="tab-btn" data-tab="import">インポート</button>
+  <button class="tab-btn" data-tab="config">設定</button>
+</div>
+
+<div class="tab-content active" id="tab-dashboard">
+<div class="card"><h2>概要</h2><div class="flex" id="dashboardMetrics"></div></div>
+<div class="flex">
+  <div class="card" style="flex:2"><h2>科目レーダー</h2><div class="chart-wrap" style="height:300px"><canvas id="chartRadar" aria-label="Radar chart"></canvas></div></div>
+  <div class="card" style="flex:1"><h2>弱点科目 Top 5</h2><div id="weakList"></div></div>
+</div>
+<div class="card"><h2>総合点推移</h2><div class="chart-wrap" style="height:220px"><canvas id="chartTrend" aria-label="Trend chart"></canvas></div></div>
+<div class="card"><h2>学習アドバイス</h2><div id="adviceList" style="font-size:13px;color:#555"></div></div>
+</div>
+
+<div class="tab-content" id="tab-data">
+<div class="card">
+  <h2>成績表 <span style="font-size:11px;font-weight:400;color:#888">セルをダブルクリックで編集</span></h2>
+  <div class="filter-bar">
+    <input type="text" id="searchExam" placeholder="試験名を検索..." oninput="renderDataTable()">
+    <select id="filterSubject" onchange="renderDataTable()"><option value="">全科目</option></select>
+    <span style="font-size:11px;color:#888;margin-left:auto" id="dataCount"></span>
+  </div>
+  <div style="overflow-x:auto">
+  <table id="dataTable" style="font-size:11px"><thead id="dataThead"></thead><tbody id="dataTbody"></tbody></table>
+  </div>
+</div>
+<div class="card">
+  <h2>クイック追加</h2>
+  <div class="form-row"><label>試験</label><input type="text" id="quickExam" placeholder="例: 中間試験" style="flex:1"></div>
+  <div class="form-row"><label>日付</label><input type="date" id="quickDate"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:8px 0;font-size:12px" id="quickScoreInputs"></div>
+  <div class="form-row">
+    <button class="btn btn-primary" onclick="addQuickExam()">追加</button>
+    <button class="btn btn-success" onclick="populateDemo()">デモデータ</button>
+    <button class="btn" onclick="clearData()">全消去</button>
+  </div>
+</div>
+</div>
+
+<div class="tab-content" id="tab-chart">
+<div class="flex">
+  <div class="card" style="flex:1"><h2>科目別推移</h2><div class="form-row"><label>科目</label><select id="singleSubject" onchange="renderSingleSubject()"></select></div><div class="chart-wrap" style="height:250px"><canvas id="chartSingle" aria-label="Single subject trend"></canvas></div></div>
+  <div class="card" style="flex:1"><h2>得点内訳</h2><div class="chart-wrap" style="height:250px"><canvas id="chartStack" aria-label="Stacked bar chart"></canvas></div></div>
+</div>
+<div class="card"><h2>ヒートマップ <span style="font-size:11px;font-weight:400;color:#888">試験 × 科目</span></h2><div style="overflow-x:auto"><table id="heatTable" style="font-size:10px;min-width:600px"></table></div></div>
+</div>
+
+<div class="tab-content" id="tab-import">
+<div class="card">
+  <h2>CSV インポート</h2>
+  <p style="font-size:12px;color:#888;margin-bottom:6px">形式: 試験名, 日付, 科目, 点数, 満点 (1行1レコード)</p>
+  <p style="font-size:11px;color:#aaa;margin-bottom:8px">例: 中間試験,2026-01-15,数学,135,150</p>
+  <textarea id="csvInput" rows="8" placeholder="CSV データを貼り付け..."></textarea>
+  <div class="form-row">
+    <button class="btn btn-primary" onclick="importCSV()">インポート</button>
+    <button class="btn" onclick="exportCSV()">エクスポート</button>
+    <span id="importMsg" style="font-size:12px;color:#888"></span>
+  </div>
+</div>
+</div>
+
+<div class="tab-content" id="tab-config">
+<div class="card">
+  <h2>生徒 & 設定</h2>
+  <div class="form-row"><label>名前</label><input type="text" id="studentName" value="太郎" onchange="saveConfig()"></div>
+  <div class="form-row"><label>学年</label><select id="studentGrade" onchange="saveConfig()"><option>高1</option><option>高2</option><option selected>高3</option></select></div>
+  <div class="form-row"><label>コース</label><select id="studentTrack" onchange="saveConfig();updateSubjects()">
+    <option value="stem-sci">理系 (理科)</option>
+    <option value="arts">文系 (文科)</option>
+    <option value="gaokao-pcb" selected>新高考: 物化生</option>
+    <option value="gaokao-pcg">新高考: 物化地</option>
+    <option value="gaokao-pbg">新高考: 物生地</option>
+    <option value="gaokao-hpg">新高考: 歴政地</option>
+    <option value="gaokao-hcb">新高考: 歴化生</option>
+  </select></div>
+  <div class="form-row"><label>外国語</label><select id="foreignLang" onchange="saveConfig()">
+    <option>英語</option><option>日本語</option><option>ロシア語</option><option>フランス語</option><option>ドイツ語</option><option>スペイン語</option><option>韓国語</option>
+  </select></div>
+  <div class="form-row"><label>満点</label><input type="number" id="fullScore" value="100" min="50" max="150" onchange="saveConfig()" style="width:70px"></div>
+</div>
+<div class="card">
+  <h2>データ管理</h2>
+  <div class="form-row"><span style="font-size:12px" id="dataStats"></span></div>
+  <div class="form-row">
+    <button class="btn btn-primary" onclick="saveToLocal()">ローカル保存</button>
+    <button class="btn btn-warning" onclick="loadFromLocal()">ローカル復元</button>
+    <button class="btn btn-success no-print" onclick="window.print()">印刷</button>
+  </div>
+</div>
+</div>
+
+<div class="card no-print" style="text-align:center;color:#888;font-size:11px">
+  <p>Win / Mac / Linux · データはブラウザの localStorage に保存 · ダブルクリック編集 · 印刷・エクスポート対応</p>
+</div>
+</div>
+
+<script>
+const ALL_SUBJECTS = [
+  {id:'chinese',label:'国語'},{id:'math',label:'数学'},{id:'foreignLang',label:'外国語'},
+  {id:'physics',label:'物理'},{id:'chemistry',label:'化学'},{id:'biology',label:'生物'},
+  {id:'history',label:'歴史'},{id:'geography',label:'地理'},{id:'politics',label:'政治'}
+];
+const TRACK_SUBJECTS = {
+  'stem-sci':['chinese','math','foreignLang','physics','chemistry','biology'],
+  'arts':['chinese','math','foreignLang','history','geography','politics'],
+  'gaokao-pcb':['chinese','math','foreignLang','physics','chemistry','biology'],
+  'gaokao-pcg':['chinese','math','foreignLang','physics','chemistry','geography'],
+  'gaokao-pbg':['chinese','math','foreignLang','physics','biology','geography'],
+  'gaokao-hpg':['chinese','math','foreignLang','history','geography','politics'],
+  'gaokao-hcb':['chinese','math','foreignLang','history','chemistry','biology']
+};
+const SUBJ_NAMES = {chinese:'国語',math:'数学',foreignLang:'外国語',physics:'物理',chemistry:'化学',biology:'生物',history:'歴史',geography:'地理',politics:'政治'};
+const SUBJ_COLORS = {chinese:'#e53935',math:'#1a73e8',foreignLang:'#43a047',physics:'#fb8c00',chemistry:'#8e24aa',biology:'#00acc1',history:'#6d4c41',geography:'#2e7d32',politics:'#c62828'};
+let state = { student: { name:'太郎', grade:'高3', track:'gaokao-pcb', foreignLang:'英語' }, fullScore: 100, exams: [], scores: [] };
+let activeSubjects = []; let editCell = null; let charts = {};
+function init(){ loadFromLocal(); buildSubjectFilter(); buildQuickInputs(); buildSingleSubjectSelect(); updateSubjects(); renderDashboard(); renderDataTable(); renderCharts(); renderHeatTable(); renderSingleSubject(); }
+function updateSubjects(){ const track = state.student.track || 'gaokao-pcb'; activeSubjects = TRACK_SUBJECTS[track] || TRACK_SUBJECTS['gaokao-pcb']; buildQuickInputs(); buildSubjectFilter(); buildSingleSubjectSelect(); renderAll(); }
+function getActiveSubjects(){ return activeSubjects.map(id => ALL_SUBJECTS.find(s=>s.id===id)).filter(Boolean); }
+function getExams(){ return [...state.exams].sort((a,b)=>new Date(a.date)-new Date(b.date)); }
+function getScore(examId, subject){ const s = state.scores.find(s=>s.examId===examId&&s.subject===subject); return s ? s.score : null; }
+function setScore(examId, subject, score){ const idx = state.scores.findIndex(s=>s.examId===examId&&s.subject===subject); if(idx>=0){ if(score===null||score==='') state.scores.splice(idx,1); else state.scores[idx].score = parseFloat(score); } else if(score!==null&&score!==''){ state.scores.push({examId,subject,score:parseFloat(score)}); } saveToLocal(); }
+function addExam(name, date){ const id = state.exams.length ? Math.max(...state.exams.map(e=>e.id)) + 1 : 1; state.exams.push({id,name,date}); saveToLocal(); return id; }
+function getTotal(examId){ let t = 0; activeSubjects.forEach(s => { const v=getScore(examId,s); if(v !== null) t+=v; }); return t; }
+function getFullTotal(){ return activeSubjects.length * state.fullScore; }
+function populateDemo(){ state.exams = []; state.scores = []; const exams = [{name:'前期月例1',date:'2025-09-15'},{name:'中間試験',date:'2025-10-30'},{name:'前期月例2',date:'2025-11-20'},{name:'期末試験',date:'2026-01-15'},{name:'後期月例',date:'2026-03-10'},{name:'模試A',date:'2026-04-20'},{name:'模試B',date:'2026-05-15'}]; const baseScores = { chinese:[105,108,110,112,115,118,120], math:[110,115,118,120,125,130,135], foreignLang:[115,118,120,122,125,128,130], physics:[85,88,90,92,95,96,98], chemistry:[80,82,85,88,90,92,94], biology:[75,78,80,82,85,87,90], history:[70,72,73,75,76,78,80], geography:[72,74,75,77,78,80,82], politics:[68,70,72,74,76,78,80] }; const fs = state.fullScore || 100; exams.forEach((e,ei) => { const id = state.exams.length + 1; state.exams.push({id, name:e.name, date:e.date}); ALL_SUBJECTS.forEach(s => { const base = (baseScores[s.id] && baseScores[s.id][ei]) ? baseScores[s.id][ei] : 75; const variance = Math.round(Math.random()*10-5); state.scores.push({examId:id, subject:s.id, score:base+variance}); }); }); saveToLocal(); renderAll(); document.getElementById('importMsg').textContent = 'デモデータを読み込みました (7試験×9科目)'; }
+function clearData(){ if(!confirm('すべてのデータを消去しますか？')) return; state.exams = []; state.scores = []; saveToLocal(); renderAll(); }
+function saveToLocal(){ try{ const data = {student:state.student, fullScore:state.fullScore, exams:state.exams, scores:state.scores}; localStorage.setItem('academicDataJa', JSON.stringify(data)); document.getElementById('dataStats').textContent = state.exams.length + ' 試験 · ' + state.scores.length + ' スコア · ' + (state.exams.length*activeSubjects.length > 0 ? Math.round(state.scores.length/(state.exams.length*activeSubjects.length)*100)+'% 完了' : ''); } catch(e){} }
+function loadFromLocal(){ try{ const raw = localStorage.getItem('academicDataJa'); if(raw){ const data = JSON.parse(raw); state.student = data.student || state.student; state.fullScore = data.fullScore || 100; state.exams = data.exams || []; state.scores = data.scores || []; } document.getElementById('studentName').value = state.student.name; document.getElementById('studentGrade').value = state.student.grade; document.getElementById('studentTrack').value = state.student.track; document.getElementById('foreignLang').value = state.student.foreignLang; document.getElementById('fullScore').value = state.fullScore; } catch(e){} }
+function saveConfig(){ state.student.name = document.getElementById('studentName').value; state.student.grade = document.getElementById('studentGrade').value; state.student.track = document.getElementById('studentTrack').value; state.student.foreignLang = document.getElementById('foreignLang').value; state.fullScore = parseInt(document.getElementById('fullScore').value) || 100; updateSubjects(); saveToLocal(); }
+function buildSubjectFilter(){ const sel = document.getElementById('filterSubject'); sel.innerHTML = '<option value="">全科目</option>'; getActiveSubjects().forEach(s => { sel.innerHTML += '<option value="'+s.id+'">'+s.label+'</option>'; }); }
+function buildQuickInputs(){ const container = document.getElementById('quickScoreInputs'); container.innerHTML = ''; getActiveSubjects().forEach(s => { container.innerHTML += '<div style="display:flex;flex-direction:column;gap:2px;align-items:center"><span style="font-size:10px;color:#888">'+s.label+'</span><input type="number" class="qi-'+s.id+'" placeholder="'+state.fullScore+'" style="width:100%;padding:4px;border:0.5px solid #ddd;border-radius:4px;text-align:center;font-size:12px"></div>'; }); }
+function buildSingleSubjectSelect(){ const sel = document.getElementById('singleSubject'); sel.innerHTML = ''; getActiveSubjects().forEach(s => { sel.innerHTML += '<option value="'+s.id+'">'+s.label+'</option>'; }); if(sel.options.length) sel.selectedIndex = 0; }
+function renderDashboard(){ const exams = getExams(); const metrics = document.getElementById('dashboardMetrics'); if(!exams.length){ metrics.innerHTML = '<div class="card" style="flex:1;text-align:center;padding:20px"><p style="color:#888;font-size:13px">データがありません · 「成績表」または「インポート」タブから追加</p></div>'; document.getElementById('weakList').innerHTML = '<p class="text-muted" style="font-size:12px;color:#888">データ読み込み後に自動分析</p>'; document.getElementById('adviceList').innerHTML = '<p class="text-muted" style="font-size:12px;color:#888">データ読み込み後に自動生成</p>'; return; } const last = exams[exams.length-1]; const lastTotal = getTotal(last.id); const prevTotal = exams.length>1 ? getTotal(exams[exams.length-2].id) : null; const ft = getFullTotal(); const totals = exams.map(e => getTotal(e.id)); const avg = Math.round(totals.reduce((a,b)=>a+b,0)/totals.length); const min = Math.min(...totals); const max = Math.max(...totals); metrics.innerHTML = '<div class="stat"><div class="num'+(prevTotal&&lastTotal>prevTotal?' up':' down')+'">'+lastTotal+'/'+ft+'</div><div class="lbl">最新 ('+last.name+')</div></div><div class="stat"><div class="num">'+avg+'</div><div class="lbl">平均 ('+exams.length+'試験)</div></div><div class="stat"><div class="num">'+max+'</div><div class="lbl">最高点</div></div><div class="stat"><div class="num'+(prevTotal&&lastTotal>prevTotal?' up':' down')+'">'+(prevTotal?(lastTotal-prevTotal>0?'+'+Math.round(lastTotal-prevTotal):Math.round(lastTotal-prevTotal)):'—')+'</div><div class="lbl">前回比</div></div>'; const kpScores = {}; activeSubjects.forEach(sid => { kpScores[sid] = []; }); exams.forEach(e => { activeSubjects.forEach(sid => { const v = getScore(e.id, sid); if(v) kpScores[sid].push(v/state.fullScore); }); }); const avgRates = activeSubjects.map(sid => { const vals = kpScores[sid]; const avg = vals.length ? Math.round(vals.reduce((a,b)=>a+b,0)/vals.length*100) : 0; return {sid, label: SUBJ_NAMES[sid], rate: avg}; }).sort((a,b)=>a.rate-b.rate); let weakHtml = ''; avgRates.slice(0,5).forEach((r,i) => { const pctClass = r.rate<50?'pct-red':r.rate<65?'pct-orange':'pct-green'; weakHtml += '<div class="weak-item"><span>'+(i+1)+'. '+r.label+'</span><span class="pct '+pctClass+'">'+r.rate+'%</span><div class="progress" style="flex:1;margin:auto 8px"><div class="bar" style="width:'+r.rate+'%;background:'+(r.rate<50?'#c62828':r.rate<65?'#e65100':'#2e7d32')+'"></div></div></div>'; }); document.getElementById('weakList').innerHTML = weakHtml || '<p style="font-size:12px;color:#888">データなし</p>'; const weak = avgRates[0]; const strong = avgRates[avgRates.length-1]; const trend = exams.length>=3 && totals[totals.length-1] > totals[0] ? '上昇' : (totals[totals.length-1] < totals[0] ? '下降' : '安定'); let adviceHtml = '<p style="margin-bottom:6px">📊 全体傾向: <strong>'+trend+'</strong> · 最新 '+exams[exams.length-1].name+' 合計 '+lastTotal+'/'+ft+'。</p><p style="margin-bottom:6px">💪 得意科目: <strong>'+strong.label+'</strong> (平均'+strong.rate+'%)。</p><p style="margin-bottom:6px">🎯 弱点科目: <strong>'+weak.label+'</strong> (平均'+weak.rate+'%)。優先的に取り組みましょう。</p>'; if(weak.rate < 60){ adviceHtml += '<p style="margin-bottom:6px">📝 <strong>'+weak.label+'</strong> 対策: 教科書の基礎を復習し、毎日30分の練習問題で中級レベルの問題を突破しましょう。</p>'; } if(state.student.foreignLang && state.student.foreignLang !== '英語'){ adviceHtml += '<p>🌐 外国語: <strong>'+state.student.foreignLang+'</strong>。専門語彙の蓄積に注意。</p>'; } document.getElementById('adviceList').innerHTML = adviceHtml; }
+function renderDataTable(){ const exams = getExams(); const kw = document.getElementById('searchExam').value.toLowerCase(); const filterSubj = document.getElementById('filterSubject').value; const filtered = kw ? exams.filter(e => e.name.toLowerCase().includes(kw)) : exams; let html = '<tr><th onclick="sortDataTable(0)" data-col="0">試験 <span class="sort">↓↑</span></th><th onclick="sortDataTable(1)" data-col="1">日付 <span class="sort">↓↑</span></th>'; const subs = getActiveSubjects(); subs.forEach(s => { html += '<th onclick="sortDataTable(\''+s.id+'\')" data-col="'+s.id+'" style="color:'+SUBJ_COLORS[s.id]+'">'+s.label+' <span class="sort">↓↑</span></th>'; }); html += '<th onclick="sortDataTable(-1)" data-col="total" style="color:#1a237e">合計 <span class="sort">↓↑</span></th>'; html += '<th style="width:24px;color:#c62828">×</th></tr>'; document.getElementById('dataThead').innerHTML = html; let bodyHtml = ''; filtered.forEach(e => { bodyHtml += '<tr><td class="sbj">'+e.name+'</td><td style="color:#888;font-size:10px">'+e.date+'</td>'; subs.forEach(s => { const v = getScore(e.id, s.id); const cls = v===null?'':(v/state.fullScore>=0.85?'score-high':v/state.fullScore>=0.6?'score-mid':'score-low'); bodyHtml += '<td class="editable" onclick="editTableScore(this,'+e.id+',\''+s.id+'\')" data-eid="'+e.id+'" data-subj="'+s.id+'"><span class="'+cls+'">'+(v!==null?v:'—')+'</span></td>'; }); const tot = getTotal(e.id); const totCls = tot/getFullTotal()>=0.8?'score-high':tot/getFullTotal()>=0.6?'score-mid':'score-low'; bodyHtml += '<td><strong class="'+totCls+'">'+tot+'</strong></td>'; bodyHtml += '<td><button class="btn" style="padding:2px 6px;font-size:10px;color:#c62828" onclick="if(confirm(\'削除 '+e.name+' ？\'))deleteExam('+e.id+')">×</button></td></tr>'; }); document.getElementById('dataTbody').innerHTML = bodyHtml; document.getElementById('dataCount').textContent = filtered.length + ' 試験 · ' + subs.length + ' 科目'; }
+function editTableScore(td, examId, subject){ if(editCell) { editCell.innerHTML = editCell.dataset.origVal || '—'; editCell=null; } const orig = getScore(examId, subject); td.dataset.origVal = td.querySelector('span') ? td.querySelector('span').textContent : '—'; td.innerHTML = '<input type="number" value="'+(orig!==null?orig:'')+'" min="0" max="'+state.fullScore+'" step="1" autofocus onblur="saveEdit(this,'+examId+',\''+subject+'\','+orig+')" onkeydown="if(event.key===\'Enter\')this.blur();if(event.key===\'Escape\'){this.parentElement.innerHTML=this.parentElement.dataset.origVal||\'—\';editCell=null}">'; editCell = td; td.querySelector('input').focus(); td.querySelector('input').select(); }
+function saveEdit(input, examId, subject, orig){ const val = input.value.trim(); const td = input.parentElement; if(val===''||val===null){ setScore(examId, subject, null); } else { const num = parseFloat(val); if(!isNaN(num) && num>=0 && num<= (state.fullScore*1.5)){ setScore(examId, subject, num); } } editCell = null; renderAll(); }
+let dataSortCol = null; let dataSortDir = 1;
+function sortDataTable(col){ if(editCell){ const inp = editCell.querySelector('input'); if(inp) { inp.blur(); return; } editCell = null; } if(dataSortCol===col){ dataSortDir*=-1; } else { dataSortCol=col; dataSortDir=1; } document.querySelectorAll('#dataThead th').forEach(th => th.classList.remove('sorted')); const ths = document.querySelectorAll('#dataThead th'); for(let i=0;i<ths.length;i++){ if(ths[i].dataset.col==String(col)){ ths[i].classList.add('sorted'); break; } } const exams = getExams(); exams.sort((a,b) => { let va,vb; if(col==='total'||col===-1){ va=getTotal(a.id); vb=getTotal(b.id); } else if(col===0){ va=a.name; vb=b.name; } else if(col===1){ va=a.date; vb=b.date; } else { va=getScore(a.id,String(col))||0; vb=getScore(b.id,String(col))||0; } if(typeof va==='string') return va.localeCompare(vb,'ja')*dataSortDir; return (va-vb)*dataSortDir; }); const kw = document.getElementById('searchExam').value.toLowerCase(); const filtered = kw ? exams.filter(e => e.name.toLowerCase().includes(kw)) : exams; let bodyHtml = ''; const subs = getActiveSubjects(); filtered.forEach(e => { bodyHtml += '<tr><td class="sbj">'+e.name+'</td><td style="color:#888;font-size:10px">'+e.date+'</td>'; subs.forEach(s => { const v = getScore(e.id, s.id); const cls = v===null?'':(v/state.fullScore>=0.85?'score-high':v/state.fullScore>=0.6?'score-mid':'score-low'); bodyHtml += '<td class="editable" onclick="editTableScore(this,'+e.id+',\''+s.id+'\')" data-eid="'+e.id+'" data-subj="'+s.id+'"><span class="'+cls+'">'+(v!==null?v:'—')+'</span></td>'; }); const tot = getTotal(e.id); const totCls = tot/getFullTotal()>=0.8?'score-high':tot/getFullTotal()>=0.6?'score-mid':'score-low'; bodyHtml += '<td><strong class="'+totCls+'">'+tot+'</strong></td>'; bodyHtml += '<td><button class="btn" style="padding:2px 6px;font-size:10px;color:#c62828" onclick="if(confirm(\'削除 '+e.name+' ？\'))deleteExam('+e.id+')">×</button></td></tr>'; }); document.getElementById('dataTbody').innerHTML = bodyHtml; }
+function deleteExam(examId){ state.exams = state.exams.filter(e => e.id !== examId); state.scores = state.scores.filter(s => s.examId !== examId); saveToLocal(); renderAll(); document.getElementById('importMsg').textContent = '試験を削除しました'; }
+function addQuickExam(){ const name = document.getElementById('quickExam').value.trim(); const date = document.getElementById('quickDate').value; if(!name||!date){ alert('試験名と日付を入力してください'); return; } const eid = addExam(name, date); getActiveSubjects().forEach(s => { const inp = document.querySelector('.qi-'+s.id); if(inp && inp.value.trim()){ const v = parseFloat(inp.value); if(!isNaN(v)) setScore(eid, s.id, v); inp.value = ''; } }); document.getElementById('quickExam').value = ''; document.getElementById('quickDate').value = ''; renderAll(); document.getElementById('importMsg').textContent = '「'+name+'」を追加しました'; }
+function renderCharts(){ renderRadarChart(); renderTrendChart(); renderStackedChart(); }
+function renderRadarChart(){ const exams = getExams(); if(!exams.length) return; const last = exams[exams.length-1]; const subs = getActiveSubjects(); const data = subs.map(s => { const v = getScore(last.id, s.id); return v ? Math.round(v/state.fullScore*100) : 0; }); if(charts.radar) charts.radar.destroy(); charts.radar = new Chart(document.getElementById('chartRadar'), {type:'radar',data:{labels:subs.map(s=>s.label),datasets:[{label:'得点率 (%)',data:data,backgroundColor:'rgba(26,35,126,0.08)',borderColor:'#1a237e',pointBackgroundColor:subs.map(s=>SUBJ_COLORS[s.id]),pointBorderColor:'#fff',pointBorderWidth:1,borderWidth:1.5,pointRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.r+'%'}}},scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:20,display:false},grid:{color:'rgba(0,0,0,0.06)'},angleLines:{color:'rgba(0,0,0,0.06)'},pointLabels:{font:{size:10}}}}}}); }
+function renderTrendChart(){ const exams = getExams(); if(!exams.length) return; if(charts.trend) charts.trend.destroy(); charts.trend = new Chart(document.getElementById('chartTrend'),{type:'line',data:{labels:exams.map(e=>e.name.replace(/^.{4}/,'')),datasets:[{label:'合計点',data:exams.map(e=>getTotal(e.id)),borderColor:'#1a237e',backgroundColor:'rgba(26,35,126,0.06)',fill:true,tension:0.3,pointRadius:exams.map((_,i)=>i===exams.length-1?5:3),pointBackgroundColor:exams.map((_,i)=>i===exams.length-1?'#e53935':'#1a237e'),borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:30}},y:{beginAtZero:false,min:Math.max(0,getTotal(exams[0].id)-80),grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:9}}}}}}); }
+function renderStackedChart(){ const exams = getExams(); if(!exams.length) return; const subs = getActiveSubjects(); if(charts.stack) charts.stack.destroy(); charts.stack = new Chart(document.getElementById('chartStack'),{type:'bar',data:{labels:exams.map(e=>e.name.replace(/^.{4}/,'')),datasets:subs.map(s=>({label:s.label,data:exams.map(e=>getScore(e.id,s.id)!==null?getScore(e.id,s.id):null),backgroundColor:SUBJ_COLORS[s.id]+'55',borderColor:SUBJ_COLORS[s.id],borderWidth:0.5,borderRadius:2,spanGaps:false}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}},tooltip:{mode:'index',intersect:false}},scales:{x:{stacked:true,ticks:{font:{size:8},maxRotation:30}},y:{stacked:true,beginAtZero:true,grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:9}}}}}}); }
+function renderSingleSubject(){ const sel = document.getElementById('singleSubject'); const subjId = sel.value; const exams = getExams(); if(!exams.length||!subjId) return; const data = exams.map(e => getScore(e.id, subjId)||0); if(charts.single) charts.single.destroy(); charts.single = new Chart(document.getElementById('chartSingle'),{type:'line',data:{labels:exams.map(e=>e.name.replace(/^.{4}/,'')),datasets:[{label:SUBJ_NAMES[subjId]||subjId,data:data,borderColor:SUBJ_COLORS[subjId]||'#1a237e',backgroundColor:(SUBJ_COLORS[subjId]||'#1a237e')+'15',fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:SUBJ_COLORS[subjId]||'#1a237e',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y+'/'+state.fullScore}}},scales:{y:{beginAtZero:true,max:state.fullScore*1.1,grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{size:9}}},x:{ticks:{font:{size:9},maxRotation:30}}}}); }
+function renderHeatTable(){ const exams = getExams(); if(!exams.length){ document.getElementById('heatTable').innerHTML='<tr><td style="color:#888;padding:20px;text-align:center">データなし</td></tr>'; return; } const subs = getActiveSubjects(); let html = '<tr><th style="min-width:70px">試験</th>'; subs.forEach(s => { html += '<th style="color:'+SUBJ_COLORS[s.id]+'">'+s.label+'</th>'; }); html += '</tr>'; exams.forEach(e => { html += '<tr><td style="font-size:10px;text-align:left;white-space:nowrap">'+e.name+'</td>'; subs.forEach(s => { const v = getScore(e.id, s.id); const pct = v ? v/state.fullScore : 0; const intensity = Math.round(pct*200); const r = intensity>170?Math.round(200-intensity):40; const g = intensity>170?40:Math.round(intensity); const bg = v!==null ? 'rgb('+r+','+g+',80)' : '#f5f6fa'; html += '<td style="background:'+bg+';color:'+(pct>.6?'#fff':'#666')+';font-weight:'+(pct>.6?'600':'400')+'">'+(v!==null?v:'—')+'</td>'; }); html += '</tr>'; }); document.getElementById('heatTable').innerHTML = html; }
+function importCSV(){ const text = document.getElementById('csvInput').value.trim(); if(!text){ alert('CSV データを貼り付けてください'); return; } const lines = text.split('\n').filter(l=>l.trim()); let count = 0; const examMap = {}; lines.forEach(line => { const parts = line.split(',').map(p=>p.trim()); if(parts.length<4) return; const [ename, edate, esubj, escore] = parts; const efull = parts[4] ? parseFloat(parts[4]) : state.fullScore; if(!examMap[ename]){ const id = state.exams.length ? Math.max(...state.exams.map(e=>e.id))+1 : 1; state.exams.push({id, name:ename, date:edate}); examMap[ename] = id; } const eid = examMap[ename]; const subjEntry = ALL_SUBJECTS.find(s => s.label===esubj || s.id===esubj); if(subjEntry && parseFloat(escore)){ setScore(eid, subjEntry.id, parseFloat(escore)); count++; } }); saveToLocal(); document.getElementById('importMsg').textContent = 'インポート完了: '+count+' 件'; renderAll(); }
+function exportCSV(){ const exams = getExams(); if(!exams.length){ alert('データがありません'); return; } let csv = '試験名,日付,科目,点数,満点\n'; exams.forEach(e => { activeSubjects.forEach(sid => { const v = getScore(e.id, sid); if(v!==null) csv += e.name+','+e.date+','+SUBJ_NAMES[sid]+','+v+','+state.fullScore+'\n'; }); }); const blob = new Blob([csv], {type:'text/csv;charset=utf-8'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = state.student.name+'_成績データ_'+new Date().toISOString().slice(0,10)+'.csv'; a.click(); document.getElementById('importMsg').textContent = 'エクスポート完了'; }
+function renderAll(){ renderDashboard(); renderDataTable(); renderCharts(); renderHeatTable(); renderSingleSubject(); saveToLocal(); }
+document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', function(){ document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active')); this.classList.add('active'); document.getElementById('tab-'+this.dataset.tab).classList.add('active'); setTimeout(() => { Object.values(charts).forEach(c => { try{ c.resize(); }catch(e){} }); }, 100); }); });
+init();
+</script>
+</body>
+</html>
